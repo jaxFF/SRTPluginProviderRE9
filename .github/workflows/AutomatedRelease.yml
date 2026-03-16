@@ -2,13 +2,14 @@ name: "Automated Release"
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  build:
-    name: "Build"
-    runs-on: "windows-latest"
+  build-csharp:
+    name: "Build (C#)"
+    runs-on: "windows-2025-vs2026"
     env:
       working-directory: .
       project-name: SRTPluginProviderRE9
@@ -100,10 +101,46 @@ jobs:
           path: |
             ${{steps.generated-variables-1.outputs.build-directory}}*
 
-  release:
-    name: "Release"
-    runs-on: "windows-latest"
-    needs: build
+  build-cpp:
+    name: "Build (C++)"
+    runs-on: "windows-2025-vs2026"
+    env:
+      working-directory: src/SRTPluginRE9
+      configuration: Release
+      preset: Release/Win/x64/MSVC
+      VCPKG_TARGET_TRIPLET: x64-windows-static
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bootstrap vcpkg
+        run: |
+          cd "$env:VCPKG_ROOT"
+          git pull
+          .\bootstrap-vcpkg.bat
+
+      - name: Configure
+        run: cmake --preset "${{ env.preset }}"
+
+      - name: Build
+        run: cmake --build --preset "${{ env.preset }}" --config ${{ env.configuration }}
+
+      - name: Upload publish artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            ${{ env.working-directory }}/bin/${{ env.preset }}/${{ env.configuration }}/SRTPluginRE9.dll
+            ${{ env.working-directory }}/bin/${{ env.preset }}/${{ env.configuration }}/SRTPluginRE9.pdb
+            ${{ env.working-directory }}/bin/${{ env.preset }}/${{ env.configuration }}/SRTPluginRE9.Injector.exe
+            ${{ env.working-directory }}/bin/${{ env.preset }}/${{ env.configuration }}/SRTPluginRE9.Injector.pdb
+
+  package:
+    name: "Package"
+    runs-on: "windows-2025-vs2026"
+    needs: [build-csharp, build-cpp]
     env:
       working-directory: .
       is-prerelease: true
@@ -123,12 +160,12 @@ jobs:
         run: |
           Add-Type -assembly 'System.IO.Compression'
           Add-Type -assembly 'System.IO.Compression.FileSystem'
-          [System.IO.Compression.ZipArchive]$zipFile = [System.IO.Compression.ZipFile]::Open('${{needs.build.outputs.zip-filename}}', ([System.IO.Compression.ZipArchiveMode]::Create))
-          [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipFile, 'LICENSE', '${{needs.build.outputs.project-name}}\LICENSE')
+          [System.IO.Compression.ZipArchive]$zipFile = [System.IO.Compression.ZipFile]::Open('${{needs.build-csharp.outputs.zip-filename}}', ([System.IO.Compression.ZipArchiveMode]::Create))
+          [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipFile, 'LICENSE', '${{needs.build-csharp.outputs.project-name}}\LICENSE')
           $filesToZip = (Get-ChildItem -Path artifact -File -Recurse).FullName
           foreach ($fileToZip in $filesToZip) {
             $fileNameInZip = $fileToZip.Replace(($pwd.Path + '\artifact\'),'')
-            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipFile, $fileToZip, ('${{needs.build.outputs.project-name}}\' + $fileNameInZip))
+            [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zipFile, $fileToZip, ('${{needs.build-csharp.outputs.project-name}}\' + $fileNameInZip))
           }
           $zipFile.Dispose()
 
@@ -139,6 +176,6 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: ${{env.is-prerelease}}
-          title: "Automated Build - ${{needs.build.outputs.version}} Release"
+          title: "Automated Build - ${{needs.build-csharp.outputs.version}} Release"
           files: |
-            ${{needs.build.outputs.zip-filename}}
+            ${{needs.build-csharp.outputs.zip-filename}}
