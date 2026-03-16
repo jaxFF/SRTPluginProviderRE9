@@ -111,8 +111,8 @@ jobs:
     env:
       VCPKG_ROOT: C:\vcpkg
       working-directory: src/SRTPluginRE9
-      configuration: Release
-      preset: Release/Win/x64/MSVC
+      configuration: Debug
+      preset: Debug/Win/x64/MSVC
       VCPKG_TARGET_TRIPLET: x64-windows-static
 
     steps:
