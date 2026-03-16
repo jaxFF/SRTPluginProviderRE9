@@ -38,11 +38,11 @@ add_link_options(
 add_compile_definitions(
     "$<$<OR:$<CONFIG:RELEASE>,$<CONFIG:MINSIZEREL>,$<CONFIG:RELWITHDEBINFO>>:RELEASE>"
     "$<$<CONFIG:DEBUG>:DEBUG>"
-    UNICODE
-    _UNICODE
-    WIN32_LEAN_AND_MEAN
-    _AMD64_
-    _WIN64
+    "UNICODE"
+    "_UNICODE"
+    "WIN32_LEAN_AND_MEAN"
+    "_AMD64_"
+    "_WIN64"
 )
 
 function(set_from_env var_name default_value var_type var_desc)

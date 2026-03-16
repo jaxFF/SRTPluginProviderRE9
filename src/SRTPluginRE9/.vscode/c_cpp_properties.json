@@ -6,9 +6,13 @@
                 "${workspaceFolder}/**"
             ],
             "defines": [
+                "DEBUG",
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "_AMD64_",
+                "_WIN64",
+                "WIN32_LEAN_AND_MEAN"
             ],
             "windowsSdkVersion": "10.0.26100.0",
             "compilerPath": "cl.exe",
