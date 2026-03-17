@@ -42,7 +42,7 @@ extern "C"
 {
 	struct InteropArray
 	{
-		int32_t Size;
+		size_t Size;
 		void *Values;
 	};
 
@@ -56,8 +56,8 @@ extern "C"
 
 	struct HPData
 	{
-		int32_t PlayerCurrentHP;
-		int32_t PlayerMaxHP;
+		int32_t CurrentHP;
+		int32_t MaximumHP;
 		bool IsSetup;
 	};
 
@@ -75,8 +75,8 @@ extern "C"
 		int32_t DARank;
 		int32_t DAScore;
 		HPData PlayerHP;
-		std::vector<EnemyData> Enemies; // Pre-filtered enemies.
-		uint32_t TotalEnemyCount;       // Total amount of enemies.
+		InteropArray AllEnemies;
+		InteropArray FilteredEnemies;
 	};
 }
 
@@ -91,6 +91,6 @@ extern std::atomic<bool> g_shutdownRequested;
 extern std::mutex g_LogMutex;
 extern DeferredWndProc g_DeferredWndProc;
 
-extern SRTGameData g_SRTGameData;
+extern std::atomic<SRTGameData> g_SRTGameData;
 
 #endif

@@ -343,111 +343,25 @@ namespace SRTPluginRE9::Hook
 		ImGui::SetNextWindowBgAlpha(debugOverlayUIOptions.Opacity);
 		if (ImGui::Begin("SRT Debug Overlay", &debugOverlayUIOptions.Open, window_flags))
 		{
-			// Game data section
-			auto rankManager = protect(reinterpret_cast<RankManager **>(*g_BaseAddress + 0x0E815400ULL)).deref();
-			auto characterManager = protect(reinterpret_cast<CharacterManager **>(*g_BaseAddress + 0x0E843CF8ULL)).deref();
-			auto gameClock = protect(reinterpret_cast<GameClock **>(*g_BaseAddress + 0x0E834680ULL)).deref();
-			// auto cameraSystem = protect(reinterpret_cast<CameraSystem **>(*g_BaseAddress + 0x0E816138ULL)).deref();
+			auto localGameData = g_SRTGameData.load();
 
 			// DA
-			auto activeRankProfile = rankManager.follow(&RankManager::_ActiveRankProfile);
-			auto daRank = activeRankProfile.read(&RankProfile::_CurrentRank);
-			auto daScore = activeRankProfile.read(&RankProfile::_RankPoints);
-			ImGui::Text("Rank: %" PRIi32, daRank);
-			ImGui::Text("Points: %" PRIi32, daScore);
-
-			// BadPointerReport(
-			//     reportedBadDA,
-			//     [=]()
-			//     {
-			// 	    return daRank == 0 && daScore == 0;
-			//     },
-			//     [=]()
-			//     {
-			// 	    logger->LogMessage("Potentially bad pointer detected: DA {} / {}\n", daRank, daScore);
-			// 	    logger->LogMessage("RankManager: {:p}\n", reinterpret_cast<void *>(rankManager.get()));
-			// 	    logger->LogMessage("RankProfile: {:p}\n", reinterpret_cast<void *>(activeRankProfile.get()));
-			//     });
+			ImGui::Text("Rank: %" PRIi32, localGameData.DARank);
+			ImGui::Text("Points: %" PRIi32, localGameData.DAScore);
 
 			// Player HP
-			auto activePlayerContext = characterManager.follow(&CharacterManager::PlayerContextFast);
-			auto playerHitPoint = activePlayerContext.follow(&PlayerContext::HitPoint);
-			auto playerHitPointData = playerHitPoint.follow(&HitPoint::HitPointData);
-			auto playerCurrentHP = playerHitPointData.read(&CharacterHitPointData::_CurrentHP);
-			auto playerMaxHP = playerHitPointData.read(&CharacterHitPointData::_CurrentMaxHP);
-			ImGui::Text("Player: %" PRIi32 " / %" PRIi32, playerCurrentHP, playerMaxHP);
+			ImGui::Text("Player: %" PRIi32 " / %" PRIi32, localGameData.PlayerHP.CurrentHP, localGameData.PlayerHP.MaximumHP);
 			ImGui::Separator();
 
-			// BadPointerReport(
-			//     reportedBadPlayerHP,
-			//     [=]()
-			//     {
-			// 	    return playerCurrentHP == 0 && playerMaxHP == 0;
-			//     },
-			//     [=]()
-			//     {
-			// 	    logger->LogMessage("Potentially bad pointer detected: Player HP {} / {}\n", playerCurrentHP, playerMaxHP);
-			// 	    logger->LogMessage("CharacterManager: {:p}\n", reinterpret_cast<void *>(characterManager.get()));
-			// 	    logger->LogMessage("PlayerContextFast: {:p}\n", reinterpret_cast<void *>(activePlayerContext.get()));
-			// 	    logger->LogMessage("PlayerHitPoint: {:p}\n", reinterpret_cast<void *>(playerHitPoint.get()));
-			// 	    logger->LogMessage("PlayerHitPointData: {:p}\n", reinterpret_cast<void *>(playerHitPointData.get()));
-			//     });
-
-			// Enemy HP
-			auto enemyContextList = characterManager.follow(&CharacterManager::EnemyContextList);
-			if (enemyContextList)
+			// Enemies
+			ImGui::Text("Enemies (%zu of %zu):", std::min(16ULL, localGameData.AllEnemies.Size), localGameData.FilteredEnemies.Size);
+			for (const auto &enemyData : std::span<EnemyData>(reinterpret_cast<EnemyData *>(localGameData.FilteredEnemies.Values), localGameData.FilteredEnemies.Size))
 			{
-				// Grabs all enemy context data we care about whose pointers are not null, then condenses them into a smaller struct for us to work over.
-				auto localList = std::span<EnemyContext *>(enemyContextList->begin(), enemyContextList->end()) |
-				                 std::views::filter([](const EnemyContext *enemyContext)
-				                                    { return enemyContext && enemyContext->HitPoint && enemyContext->HitPoint->HitPointData; }) |
-				                 std::views::transform([](const EnemyContext *enemyContext)
-				                                       { return CondensedEnemyInfo{
-					                                         .KindID = enemyContext->KindID,
-					                                         .CurrentHP = enemyContext->HitPoint->HitPointData->_CurrentHP,
-					                                         .CurrentMaxHP = enemyContext->HitPoint->HitPointData->_CurrentMaxHP,
-					                                         .IsSetup = enemyContext->HitPoint->HitPointData->_IsSetuped != 0}; });
-
-				// Applies user-defined filtering.
-				auto userFilteredList = localList |
-				                        std::views::filter([](const CondensedEnemyInfo &enemyContext)
-				                                           { return enemyContext.CurrentMaxHP >= 2 && enemyContext.CurrentHP != 0; }) |
-				                        std::ranges::to<std::vector>();
-
-				// Applies user-defined sorting.
-				auto compare = OrderByDescending([](const CondensedEnemyInfo &enemyInfo)
-				                                 { return enemyInfo.CurrentHP < enemyInfo.CurrentMaxHP; })
-				                   .ThenByDescending([](const CondensedEnemyInfo &enemyInfo)
-				                                     { return enemyInfo.CurrentMaxHP; });
-				std::ranges::sort(userFilteredList, compare);
-
-				// Iterates over the results for display.
-				auto filteredEnemyCount = userFilteredList.size();
-				ImGui::Text("Enemies (%zu of %zu):", std::min(enemyCountLimit, filteredEnemyCount), filteredEnemyCount);
-				for (const auto &enemyContext : userFilteredList | std::views::take(enemyCountLimit))
-				{
-					if (enemyContext.CurrentHP != enemyContext.CurrentMaxHP)
-						ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.5f, 1.0f), "%" PRIi32 " / %" PRIi32, enemyContext.CurrentHP, enemyContext.CurrentMaxHP);
-					else
-						ImGui::Text("%" PRIi32 " / %" PRIi32, enemyContext.CurrentHP, enemyContext.CurrentMaxHP);
-				}
+				if (enemyData.HP.CurrentHP != enemyData.HP.MaximumHP)
+					ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.5f, 1.0f), "%" PRIi32 " / %" PRIi32, enemyData.HP.CurrentHP, enemyData.HP.MaximumHP);
+				else
+					ImGui::Text("%" PRIi32 " / %" PRIi32, enemyData.HP.CurrentHP, enemyData.HP.MaximumHP);
 			}
-
-			// IGT
-			// auto timers = gameClock.follow(&GameClock::_Timers);
-			// if (timers)
-			// {
-			// 	auto count = static_cast<size_t>(timers->Count());
-			// 	for (size_t i = 0ULL; i < count; ++i)
-			// 	{
-			// 		auto time = timers.follow<Time>(offsetof(ManagedArray<Time *>, _Values), i, count);
-			// 		if (time)
-			// 		{
-			// 			auto elapsed = time.read(&Time::_ElapsedTime);
-			// 			ImGui::Text("Timer[%" PRIu32 "]: elapsed = %" PRIu64, i, elapsed);
-			// 		}
-			// 	}
-			// }
 		}
 		ImGui::End();
 	}
