@@ -29,6 +29,7 @@ env:
   baseFolderName: SRTPluginProviderRE9
   platform: x64
   configuration: ${{ github.event.inputs.buildConfiguration || 'Release' }}
+  cppConfiguration: ${{ github.event.inputs.buildConfiguration || 'RelWithDebugInfo' }}
 
 jobs:
   setup:
@@ -193,17 +194,17 @@ jobs:
 
       - name: Build
         working-directory: ${{ env.working-directory }}
-        run: cmake --build --preset "${{ env.configuration }}/Win/x64/MSVC"
+        run: cmake --build --preset "${{ env.configuration }}/Win/x64/MSVC" --config ${{ env.cppConfiguration }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
           name: ArtifactsCpp
           path: |
-            ${{ env.working-directory }}/bin/${{ env.configuration }}/Win/x64/MSVC/${{ env.configuration }}/SRTPluginRE9.dll
-            ${{ env.working-directory }}/bin/${{ env.configuration }}/Win/x64/MSVC/${{ env.configuration }}/SRTPluginRE9.pdb
-            ${{ env.working-directory }}/bin/${{ env.configuration }}/Win/x64/MSVC/${{ env.configuration }}/SRTPluginRE9.Injector.exe
-            ${{ env.working-directory }}/bin/${{ env.configuration }}/Win/x64/MSVC/${{ env.configuration }}/SRTPluginRE9.Injector.pdb
+            ${{ env.working-directory }}/bin/${{ env.configuration }}/Win/x64/MSVC/${{ env.cppConfiguration }}/SRTPluginRE9.dll
+            ${{ env.working-directory }}/bin/${{ env.configuration }}/Win/x64/MSVC/${{ env.cppConfiguration }}/SRTPluginRE9.pdb
+            ${{ env.working-directory }}/bin/${{ env.configuration }}/Win/x64/MSVC/${{ env.cppConfiguration }}/SRTPluginRE9.Injector.exe
+            ${{ env.working-directory }}/bin/${{ env.configuration }}/Win/x64/MSVC/${{ env.cppConfiguration }}/SRTPluginRE9.Injector.pdb
 
   package:
     name: "Package"
