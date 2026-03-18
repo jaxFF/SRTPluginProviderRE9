@@ -207,8 +207,8 @@ jobs:
 
   package:
     name: "Package"
-    runs-on: "windows-2025-vs2026"
-    needs: [build-csharp, build-cpp, setup]
+    runs-on: windows-2025-vs2026
+    needs: [setup, build-csharp, build-cpp]
     env:
       working-directory: .
       is-prerelease: true
@@ -252,3 +252,18 @@ jobs:
           title: "Automated Build - v${{needs.Setup.outputs.verSemVerString}} Release"
           files: |
             ${{env.projectName}}_${{needs.Setup.outputs.verSemVerString}}.zip
+
+  PostRun:
+    name: Post-Run
+    runs-on: windows-2025-vs2026
+    needs: [package]
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Update build number variable
+        env:
+          GH_TOKEN: ${{ secrets.GH_VARIABLE_RW_TOKEN }}
+        run: gh variable set BUILD_NUMBER -b${{needs.Setup.outputs.verBuild}}
