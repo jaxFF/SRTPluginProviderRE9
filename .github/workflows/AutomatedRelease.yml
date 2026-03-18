@@ -256,7 +256,7 @@ jobs:
   PostRun:
     name: Post-Run
     runs-on: windows-2025-vs2026
-    needs: [package]
+    needs: [setup, package]
 
     defaults:
       run:
