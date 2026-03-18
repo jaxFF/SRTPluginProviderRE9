@@ -193,7 +193,7 @@ jobs:
 
       - name: Build
         working-directory: ${{ env.working-directory }}
-        run: cmake --build --preset "${{ env.configuration }}/Win/x64/MSVC" --config ${{ env.configuration }}
+        run: cmake --build --preset "${{ env.configuration }}/Win/x64/MSVC"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
