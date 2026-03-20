@@ -42,7 +42,15 @@ static void SRTSettings_ReadLine(ImGuiContext *, ImGuiSettingsHandler *, void * 
 	if (!readSuccess)
 		readSuccess = TryReadSetting(inputStringView, "LogoPosition=", g_SRTSettings.LogoPosition);
 	if (!readSuccess)
+	{
 		readSuccess = TryReadSetting(inputStringView, "LogoOpacity=", g_SRTSettings.LogoOpacity);
+
+		// Lock logo opacity within the range of 10% to 100%.
+		if (g_SRTSettings.LogoOpacity < 0.1f)
+			g_SRTSettings.LogoOpacity = 0.1f;
+		else if (g_SRTSettings.LogoOpacity > 1.f)
+			g_SRTSettings.LogoOpacity = 1.f;
+	}
 
 	if (!readSuccess)
 		readSuccess = TryReadSetting(inputStringView, "MainOpacity=", g_SRTSettings.MainOpacity);
