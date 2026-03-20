@@ -465,6 +465,21 @@ namespace SRTPluginRE9::Hook
 		if (!g_dx12HookState.initialized)
 			return oResizeBuffers(pSwapChain, BufferCount, Width, Height, NewFormat, Flags);
 
+		ID3D12Device *device;
+		ID3D12Device *cachedDevice = (ID3D12Device *) (*g_dx12HookState.device.GetAddressOf());
+		assert(!FAILED(pSwapChain->GetDevice(IID_PPV_ARGS(&device))));
+
+		// NOTE(@j): This line catches invalidation of the device object
+		//  which may occur through certain edge cases on some drivers. 
+		// If this assert is ever caught we might need to handle things accordingly.
+#if _DEBUG
+		assert(device == cachedDevice);
+#else
+		(void)(cachedDevice);
+#endif
+
+		ImGui_ImplDX12_InvalidateDeviceObjects();
+
 		// Release render targets before the resize
 		for (auto &frameContext : g_dx12HookState.frameContexts)
 		{
@@ -485,12 +500,35 @@ namespace SRTPluginRE9::Hook
 
 			return hResult;
 		}
-		auto backBufferFormat = desc.BufferDesc.Format;
+
+		// NOTE(@j): 
+		// We must recreate RTV descriptors on resize.
+		// Previously RTV descriptor heap kept being allocated from and was never reset
+		// while using a linear allocator, producing invalid descriptor handles which 
+		// caused dereferences to invalid descriptors in the graphics driver and 
+		// descriptor exhaustion over time (memory leak!).
+		//
+		// It's really important to fully reset and reinitialize the RTV heap here, 
+		// then allocate one RTV descriptor per back buffer as usual.
+		auto &rtv = g_dx12HookState.heaps.rtv;
+		g_dx12HookState.bufferCount = desc.BufferCount;
+		rtv.Reset();
+
+		UINT rtvCapacity = g_dx12HookState.bufferCount;
+		logger->LogMessage("hkResizeBuffers() - Reallocating RTV ({}) Heaps\n", rtvCapacity);
+		auto rtvResult = rtv.Init(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, rtvCapacity, false);
+		if (!rtvResult) {
+			auto error = rtvResult.error();
+			logger->LogMessage("hkResizeBuffers() - Failed recreating RTV descriptor heaps with error: {}\n", error);
+			hResult = E_FAIL;
+			return hResult;
+		}
 
 		// Recreate render targets
 		for (UINT i = 0; i < g_dx12HookState.bufferCount; ++i)
 		{
 			auto &frameContext = g_dx12HookState.frameContexts[i];
+
 			auto rtvHandle = g_dx12HookState.heaps.rtv.Allocate();
 			frameContext.rtvHandle = rtvHandle.cpu;
 
@@ -501,17 +539,12 @@ namespace SRTPluginRE9::Hook
 				return false;
 			}
 
-			D3D12_RENDER_TARGET_VIEW_DESC rtvDesc{
-			    .Format = backBufferFormat,
-			    .ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D,
-			};
-
-			g_dx12HookState.device->CreateRenderTargetView(frameContext.renderTarget.Get(), &rtvDesc, rtvHandle.cpu);
+			device->CreateRenderTargetView(frameContext.renderTarget.Get(), 0, rtvHandle.cpu);
 		}
 
-		srtUI->DesktopResized();
+		ImGui_ImplDX12_CreateDeviceObjects();
 
-		// May need to re-init ImGui here if the DXGI format changed...
+		srtUI->DesktopResized();
 
 		return hResult;
 	}
