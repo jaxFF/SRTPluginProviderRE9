@@ -1,5 +1,6 @@
 #include "UI.h"
 #include "CompositeOrderer.h"
+#include "EnemyIds.h"
 #include "GameObjects.h"
 #include "Globals.h"
 #include "Logo.h"
@@ -390,14 +391,25 @@ namespace SRTPluginRE9::Hook
 			ImGui::Separator();
 
 			// Enemies
-			auto enemiesToShow = std::min(static_cast<size_t>(g_SRTSettings.EnemiesShownLimit), localGameData.FilteredEnemies.Size);
+			const auto enemiesToShow = std::min(static_cast<size_t>(g_SRTSettings.EnemiesShownLimit), localGameData.FilteredEnemies.Size);
 			ImGui::Text("Enemies (%zu of %zu):", enemiesToShow, localGameData.FilteredEnemies.Size);
-			for (const auto &enemyData : std::span<EnemyData>(reinterpret_cast<EnemyData *>(localGameData.FilteredEnemies.Values), localGameData.FilteredEnemies.Size) | std::views::take(g_SRTSettings.EnemiesShownLimit))
+
+			for (const auto &enemyData : std::span(static_cast<EnemyData *>(localGameData.FilteredEnemies.Values), localGameData.FilteredEnemies.Size) | std::views::take(g_SRTSettings.EnemiesShownLimit))
 			{
+				if (enemyData.HP.CurrentHP >= 1000000)
+				{
+					continue;
+				}
+				auto name_display = enemies.contains(enemyData.KindID) ? enemies.at(enemyData.KindID) : std::format("{}", enemyData.KindID);
 				if (enemyData.HP.CurrentHP != enemyData.HP.MaximumHP)
-					ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.5f, 1.0f), "%" PRIi32 " / %" PRIi32, enemyData.HP.CurrentHP, enemyData.HP.MaximumHP);
+				{
+					ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.5f, 1.0f), "%s %" PRIi32 " / %" PRIi32, name_display.c_str(), enemyData.HP.CurrentHP, enemyData.HP.MaximumHP);
+				}
 				else
-					ImGui::Text("%" PRIi32 " / %" PRIi32, enemyData.HP.CurrentHP, enemyData.HP.MaximumHP);
+				{
+					ImGui::Text("%s %" PRIi32 " / %" PRIi32, name_display.c_str(), enemyData.HP.CurrentHP, enemyData.HP.MaximumHP);
+				}
+
 			}
 		}
 		ImGui::End();

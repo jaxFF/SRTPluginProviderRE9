@@ -688,7 +688,7 @@ namespace SRTPluginRE9::Hook
 
 			// Enemy HP
 			auto enemyContextManagedList = characterManager.follow(&CharacterManager::EnemyContextList);
-			localGameData.AllEnemiesBacking = std::span<EnemyContext *>(enemyContextManagedList->begin(), enemyContextManagedList->end()) |
+			localGameData.AllEnemiesBacking = std::span(enemyContextManagedList->begin(), enemyContextManagedList->end()) |
 			                                  std::views::transform([](const EnemyContext *enemyContext)
 			                                                        {
 				                                              auto protectedEnemyContext = protect(enemyContext);
@@ -715,7 +715,7 @@ namespace SRTPluginRE9::Hook
 			                                                          { return enemyData.HP.MaximumHP >= 2 && enemyData.HP.CurrentHP != 0; }) |
 			                                       std::ranges::to<std::vector>();
 
-			auto compare = OrderByDescending([](const EnemyData &enemyData)
+			constexpr auto compare = OrderByDescending([](const EnemyData &enemyData)
 			                                 { return enemyData.HP.CurrentHP < enemyData.HP.MaximumHP; })
 			                   .ThenByDescending([](const EnemyData &enemyData)
 			                                     { return enemyData.HP.MaximumHP; });

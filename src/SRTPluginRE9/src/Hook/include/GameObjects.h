@@ -148,7 +148,7 @@ struct HitPoint // 0x80 (128)
 struct CharacterContext // 0xF8 (248)
 {
 	uint8_t _unknown1[0x40]; // 0x00 - 0x3F (64)
-	int32_t KindID;          // 0x40 - 0x43 (4) (enum of app.CharacterKindID)
+	uint16_t KindID;          // 0x40 - 0x43 (4) (enum of app.CharacterKindID)
 	uint8_t _unknown2[0x2C]; // 0x44 - 0x6F (44)
 	HitPoint *HitPoint;      // 0x70 - 0x77 (8)
 	uint8_t _unknown3[0x80]; // 0x78 - 0xF7 (128)

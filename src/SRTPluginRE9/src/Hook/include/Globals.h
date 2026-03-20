@@ -5,10 +5,8 @@
 #include "DescriptorHeapAllocator.h"
 #include "Logger.h"
 #include "Settings.h"
-#include <array>
 #include <atomic>
 #include <cstdint>
-#include <cstdio>
 #include <mutex>
 #include <optional>
 #include <windows.h>
@@ -109,7 +107,7 @@ extern "C"
 
 	struct EnemyData
 	{
-		int32_t KindID;
+		uint16_t KindID;
 		HPData HP;
 		PositionalData Position;
 	};
