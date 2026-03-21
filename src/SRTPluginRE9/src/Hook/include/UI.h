@@ -68,6 +68,7 @@ namespace SRTPluginRE9::Hook
 		int32_t logoWidth = 0;
 		int32_t logoHeight = 0;
 		float logoScaleFactor = .5f;
+		bool hideFullHPEnemies = false;
 
 		std::atomic<uint32_t> reportedBadDA = 0;
 		std::atomic<uint32_t> reportedBadPlayerHP = 0;
