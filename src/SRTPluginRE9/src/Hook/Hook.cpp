@@ -541,7 +541,7 @@ namespace SRTPluginRE9::Hook
 
 		ImGui_ImplDX12_CreateDeviceObjects();
 
-		srtUI->DesktopResized();
+		srtUI->GameWindowResized();
 
 		return hResult;
 	}

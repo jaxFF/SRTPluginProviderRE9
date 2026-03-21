@@ -35,7 +35,7 @@ namespace SRTPluginRE9::Hook
 		~UI();
 		void STDMETHODCALLTYPE DrawUI();
 		void STDMETHODCALLTYPE ToggleUI();
-		void STDMETHODCALLTYPE DesktopResized();
+		void STDMETHODCALLTYPE GameWindowResized();
 
 	private:
 		void STDMETHODCALLTYPE RescaleDPI();

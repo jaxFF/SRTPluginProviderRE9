@@ -37,7 +37,7 @@ namespace SRTPluginRE9::Hook
 			IM_ASSERT(ret);
 		}
 
-		DesktopResized();
+		GameWindowResized();
 	}
 
 	UI::~UI()
@@ -488,13 +488,12 @@ namespace SRTPluginRE9::Hook
 		ImGui::End();
 	}
 
-	void STDMETHODCALLTYPE UI::DesktopResized()
+	void STDMETHODCALLTYPE UI::GameWindowResized()
 	{
-		const HWND hDesktop = GetDesktopWindow();
-		RECT desktop;
-		GetWindowRect(hDesktop, &desktop);
-		horizontal = static_cast<float>(desktop.right);
-		vertical = static_cast<float>(desktop.bottom);
+		RECT gameWindowSize;
+		GetWindowRect(g_dx12HookState.gameWindow, &gameWindowSize);
+		horizontal = static_cast<float>(gameWindowSize.right);
+		vertical = static_cast<float>(gameWindowSize.bottom);
 
 		if (g_SRTSettings.DPIScalingFactor == 0.f)
 			g_SRTSettings.DPIScalingFactor = ImGui_ImplWin32_GetDpiScaleForMonitor(::MonitorFromPoint(POINT{0, 0}, MONITOR_DEFAULTTOPRIMARY));
