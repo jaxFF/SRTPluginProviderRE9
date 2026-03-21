@@ -26,6 +26,11 @@ struct SRTSettings
 	float OverlayOpacity = .2f;
 
 	int EnemiesShownLimit = 16;
+	uint32_t EnemiesHideFullHP = 1U;      // true
+	uint32_t EnemyHPBarsVisible = 0U;     // false
+	uint32_t EnemyHPBarsShowPercent = 0U; // false
+	float EnemyHPBarsWidth = 100.f;
+	float EnemyHPBarsHeight = 10.f;
 
 	float DPIScalingFactor = 0.f;
 	float FontScalingFactor = 0.f;

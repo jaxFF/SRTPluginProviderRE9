@@ -68,6 +68,16 @@ static void SRTSettings_ReadLine(ImGuiContext *, ImGuiSettingsHandler *, void * 
 
 	if (!readSuccess)
 		readSuccess = TryReadSetting(inputStringView, "EnemiesShownLimit=", g_SRTSettings.EnemiesShownLimit);
+	if (!readSuccess)
+		readSuccess = TryReadSetting(inputStringView, "EnemiesHideFullHP=", g_SRTSettings.EnemiesHideFullHP);
+	if (!readSuccess)
+		readSuccess = TryReadSetting(inputStringView, "EnemyHPBarsVisible=", g_SRTSettings.EnemyHPBarsVisible);
+	if (!readSuccess)
+		readSuccess = TryReadSetting(inputStringView, "EnemyHPBarsShowPercent=", g_SRTSettings.EnemyHPBarsShowPercent);
+	if (!readSuccess)
+		readSuccess = TryReadSetting(inputStringView, "EnemyHPBarsWidth=", g_SRTSettings.EnemyHPBarsWidth);
+	if (!readSuccess)
+		readSuccess = TryReadSetting(inputStringView, "EnemyHPBarsHeight=", g_SRTSettings.EnemyHPBarsHeight);
 
 	if (!readSuccess)
 		readSuccess = TryReadSetting(inputStringView, "DPIScalingFactor=", g_SRTSettings.DPIScalingFactor);
@@ -92,6 +102,11 @@ static void SRTSettings_WriteAll(ImGuiContext *, ImGuiSettingsHandler *handler, 
 	out_buf->appendf("OverlayOpacity=%f\n", g_SRTSettings.OverlayOpacity);
 
 	out_buf->appendf("EnemiesShownLimit=%d\n", g_SRTSettings.EnemiesShownLimit);
+	out_buf->appendf("EnemiesHideFullHP=%d\n", g_SRTSettings.EnemiesHideFullHP);
+	out_buf->appendf("EnemyHPBarsVisible=%d\n", g_SRTSettings.EnemyHPBarsVisible);
+	out_buf->appendf("EnemyHPBarsShowPercent=%d\n", g_SRTSettings.EnemyHPBarsShowPercent);
+	out_buf->appendf("EnemyHPBarsWidth=%f\n", g_SRTSettings.EnemyHPBarsWidth);
+	out_buf->appendf("EnemyHPBarsHeight=%f\n", g_SRTSettings.EnemyHPBarsHeight);
 
 	out_buf->appendf("DPIScalingFactor=%f\n", g_SRTSettings.DPIScalingFactor);
 	out_buf->appendf("FontScalingFactor=%f\n", g_SRTSettings.FontScalingFactor);

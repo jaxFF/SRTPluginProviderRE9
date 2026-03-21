@@ -190,15 +190,15 @@ namespace SRTPluginRE9::Hook
 			}
 		}
 
-		ImGui::Checkbox("Show HP bars", &hpBarData.shouldShow);
-		if (hpBarData.shouldShow)
+		ImGui::Checkbox("Show HP bars", reinterpret_cast<bool *>(&g_SRTSettings.EnemyHPBarsVisible));
+		if (g_SRTSettings.EnemyHPBarsVisible)
 		{
 			ImGui::SameLine();
-			ImGui::Checkbox("Show HP percent", &hpBarData.displayPercent);
-			BarSizeSlider("Width", hpBarData.width, 20.0f, 300.0f);
-			BarSizeSlider("Height", hpBarData.height, 2.0f, 30.0f);
+			ImGui::Checkbox("Show HP percent", reinterpret_cast<bool *>(&g_SRTSettings.EnemyHPBarsShowPercent));
+			BarSizeSlider("Width", g_SRTSettings.EnemyHPBarsWidth, 20.0f, 300.0f);
+			BarSizeSlider("Height", g_SRTSettings.EnemyHPBarsHeight, 2.0f, 30.0f);
 		}
-		ImGui::Checkbox("Hide full HP enemies", &hideFullHPEnemies);
+		ImGui::Checkbox("Hide full HP enemies", reinterpret_cast<bool *>(&g_SRTSettings.EnemiesHideFullHP));
 
 		ImGui::End();
 	}
@@ -411,7 +411,7 @@ namespace SRTPluginRE9::Hook
 
 			for (const auto &enemyData : std::span(static_cast<EnemyData *>(localGameData.FilteredEnemies.Values), localGameData.FilteredEnemies.Size) | std::views::take(g_SRTSettings.EnemiesShownLimit))
 			{
-				if (enemyData.HP.CurrentHP >= 1'000'000 || (hideFullHPEnemies && enemyData.HP.CurrentHP == enemyData.HP.MaximumHP))
+				if (enemyData.HP.CurrentHP >= 1'000'000 || (g_SRTSettings.EnemiesHideFullHP && enemyData.HP.CurrentHP == enemyData.HP.MaximumHP))
 				{
 					continue;
 				}
@@ -425,11 +425,11 @@ namespace SRTPluginRE9::Hook
 					ImGui::Text("%s %" PRIi32 " / %" PRIi32, name_display.c_str(), enemyData.HP.CurrentHP, enemyData.HP.MaximumHP);
 				}
 
-				if (hpBarData.shouldShow)
+				if (g_SRTSettings.EnemyHPBarsVisible)
 				{
 					const auto hpPercent = enemyData.HP.MaximumHP > 0
-					                            ? static_cast<float>(enemyData.HP.CurrentHP) / static_cast<float>(enemyData.HP.MaximumHP)
-					                            : 0.0f;
+					                           ? static_cast<float>(enemyData.HP.CurrentHP) / static_cast<float>(enemyData.HP.MaximumHP)
+					                           : 0.0f;
 
 					// Fill color
 					ImGui::PushStyleColor(ImGuiCol_PlotHistogram, ImVec4(0.20f, 0.80f, 0.20f, 1.00f));
@@ -438,14 +438,14 @@ namespace SRTPluginRE9::Hook
 					ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.20f, 0.20f, 0.80f, 1.00f));
 
 					// Scale by the font scale factor so that the bars remain proportional to the text size
-					const auto width = hpBarData.width * g_SRTSettings.FontScalingFactor;
-					const auto height = hpBarData.height * g_SRTSettings.FontScalingFactor;
+					const auto width = g_SRTSettings.EnemyHPBarsWidth * g_SRTSettings.FontScalingFactor;
+					const auto height = g_SRTSettings.EnemyHPBarsHeight * g_SRTSettings.FontScalingFactor;
 
 					ImGui::ProgressBar(hpPercent, ImVec2(width, height), "");
 
 					ImGui::PopStyleColor(2);
 
-					if (hpBarData.displayPercent)
+					if (g_SRTSettings.EnemyHPBarsShowPercent)
 					{
 						ImGui::SameLine();
 						ImGui::Text("%.1f%%", hpPercent * 100.0f);
