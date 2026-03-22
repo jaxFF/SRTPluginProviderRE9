@@ -198,7 +198,8 @@ namespace SRTPluginRE9::Hook
 		pSwapChain->GetDesc(&desc);
 		g_dx12HookState.bufferCount = desc.BufferCount;
 		g_dx12HookState.gameWindow = desc.OutputWindow;
-		g_dx12HookState.frameContexts.resize(g_dx12HookState.bufferCount);
+		SRT_Assert(desc.BufferCount <= MAX_BACK_BUFFER_COUNT);
+		SRT_Assert(desc.BufferCount <= ArrayCount(g_dx12HookState.frameContexts));
 
 		auto backBufferFormat = desc.BufferDesc.Format;
 		logger->LogMessage("initImGui() - BufferCount={}, Format={}, Window={:p}\n",

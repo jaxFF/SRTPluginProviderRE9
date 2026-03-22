@@ -64,6 +64,7 @@ struct FrameContext
 	uint64_t fenceValue = 0;
 };
 
+#define MAX_BACK_BUFFER_COUNT 3
 struct DX12HookState
 {
 	// Device objects we create for our overlay
@@ -73,9 +74,9 @@ struct DX12HookState
 	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
 	Microsoft::WRL::ComPtr<ID3D12Fence> fence;
 	HANDLE fenceEvent = nullptr;
-	uint64_t fenceValue = 0;
+	uint64_t fenceValue = 0; // @TODO, Refactor: This should be named lastSignaledFenceValue
 
-	std::vector<FrameContext> frameContexts;
+	FrameContext frameContexts[MAX_BACK_BUFFER_COUNT];
 	UINT bufferCount = 0;
 	HWND gameWindow = nullptr;
 	WNDPROC origWndProc = nullptr;
