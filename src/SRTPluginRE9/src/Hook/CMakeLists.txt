@@ -57,6 +57,7 @@ target_sources(${PROJECT_NAME}
         UI.cpp
         Settings.cpp
         Render.cpp
+        DX12Hook.cpp
         Hook.cpp
         Logger.cpp
         DllMain.cpp
